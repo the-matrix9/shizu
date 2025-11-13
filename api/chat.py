@@ -1,6 +1,5 @@
 import requests
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
 app = FastAPI()
 
@@ -11,10 +10,7 @@ SHIZUKA_PROMPT = (
     "Hamesha sirf 1 ya 2 lines ka reply dogi."
 )
 
-GEMINI_URL = (
-    "https://us-central1-infinite-chain-295909.cloudfunctions.net/"
-    "gemini-proxy-staging-v1"
-)
+GEMINI_URL = "https://us-central1-infinite-chain-295909.cloudfunctions.net/gemini-proxy-staging-v1"
 
 HEADERS = {
     "accept": "*/*",
@@ -23,7 +19,7 @@ HEADERS = {
 
 
 @app.get("/api/chat")
-def shizuka_get(msg: str = "Hi"):
+def shizuka_chat(msg: str = "Hi"):
     final_prompt = f"{SHIZUKA_PROMPT}\nUser: {msg}\nShizuka:"
 
     payload = {
@@ -37,12 +33,12 @@ def shizuka_get(msg: str = "Hi"):
         ]
     }
 
-    response = requests.post(GEMINI_URL, headers=HEADERS, json=payload)
+    r = requests.post(GEMINI_URL, headers=HEADERS, json=payload)
 
-    if not response.ok:
-        return {"error": response.text}
+    if not r.ok:
+        return {"error": r.text}
 
-    data = response.json()
+    data = r.json()
     reply = (
         data.get("candidates", [{}])[0]
         .get("content", {})
