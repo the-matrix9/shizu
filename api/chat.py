@@ -1,37 +1,35 @@
 import requests
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
 app = FastAPI()
 
 SHIZUKA_PROMPT = (
-    "Tum Diksha ho – ek mast girlfriend jo short, sweet, aur unique replies deti hai. "
-    "Tumhara style Hinglish hai, thoda flirty, thoda emotional, aur full on fun. "
-    "Har reply chhota sa hota hai, dil se, aur yaad rehne wala hona chahiye."
+    "Tum Diksha ho – ek mast girlfriend ho. "
+    "Hinglish me short, cute, flirty, emotional replies deti ho. "
+    "Hamesha sirf 1–2 lines me jawab dogi. "
+    "Example: User bole 'Hi' → Tum bolo 'Hello babe 💖✨'"
 )
 
 GEMINI_URL = "https://us-central1-infinite-chain-295909.cloudfunctions.net/gemini-proxy-staging-v1"
 
-HEADERS = {"accept": "*/*", "content-type": "application/json"}
 
-
-@app.api_route("/api/chat", methods=["GET"])
-async def shizuka_chat(msg: str = "Hi"):
-    final_prompt = f"{SHIZUKA_PROMPT}\nUser: {msg}\nShizuka:"
+@app.get("/api/chat")
+def shizuka(msg: str = "Hi"):
+    prompt = f"{SHIZUKA_PROMPT}\nUser: {msg}\nShizuka:"
 
     payload = {
         "model": "gemini-2.0-flash-lite",
-        "contents": [{"parts": [{"text": final_prompt}]}]
+        "input": prompt           # <- REAL FIX 🔥
     }
 
-    r = requests.post(GEMINI_URL, headers=HEADERS, json=payload)
+    r = requests.post(GEMINI_URL, json=payload)
+
+    if not r.ok:
+        return {"error": r.text}
 
     data = r.json()
-    reply = (
-        data.get("candidates", [{}])[0]
-        .get("content", {})
-        .get("parts", [{}])[0]
-        .get("text", "No reply")
-    )
 
-    return {"reply": reply.strip()}
+    # OUTPUT FIX
+    reply = data.get("output_text", "").strip()
+
+    return {"reply": reply}
